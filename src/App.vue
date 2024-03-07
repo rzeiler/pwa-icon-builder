@@ -23,7 +23,7 @@
           Open Image
         </button>
 
-        <button class="btn" @click="prettyPrint">Format Manifest</button>
+        <button class="btn prettier" @click="prettyPrint">Format Manifest</button>
 
         <button class="btn" type="button" @click="build">Build</button>
         <button class="btn" type="button" @click="download">Download / Save</button>
@@ -45,7 +45,7 @@
 
     <div class="display-4">Images</div>
     <div
-      class="d-flex flex-row flex-nowrap overflow-auto align-items-end "
+      class="d-flex flex-row flex-nowrap overflow-auto align-items-end"
       style="scroll-snap-type: x proximity; scroll-snap-align: center"
     >
       <div
@@ -68,13 +68,20 @@
       <input type="file" ref="file" multiple="false" @change="fileChange" />
       <a ref="link"></a>
     </div>
-    <div class="flex-grow-1">
-    </div>
+    <div class="flex-grow-1"></div>
     <div>
       Credit:
       <a href="https://www.flaticon.com/free-icons/cement" title="cement icons"
         >Cement icons created by Freepik - Flaticon</a
       >
+    </div>
+
+    <div class="d-flex tree-bg overflow-hidden p-1" style="min-height: 200px">
+      <scrollbar class="pe-3 h-100" style="min-width: 200px" :settings="settings">
+        <TreeItem :node="treeData" @treeitem-click="clickHandle" />
+      </scrollbar>
+
+      <div>CODE</div>
     </div>
   </div>
 </template>
@@ -82,9 +89,16 @@
 <script>
 import demoManifest from "@/assets/demo-manifest.json";
 import image from "@/assets/logo.png";
+import TreeItem from "./components/TreeItem";
+
+import scrollbar from "./components/Scrollbar";
 
 export default {
   name: "App",
+  components: {
+    TreeItem,
+    scrollbar,
+  },
   data() {
     return {
       canvas: null,
@@ -92,9 +106,36 @@ export default {
       list: [],
       base_image: new Image(),
       processing: false,
+      treeData: {
+        name: "ICONBUILDER",
+        type: "folder",
+        children: [
+          { name: "manifest", icon: "/img/ui-icons/folder-components.svg", type: "folder" },
+          { name: "icons", icon: "/img/ui-icons/folder-config.svg", type: "folder", children: [] },
+        ],
+      },
+      settings: {
+        suppressScrollY: false,
+        suppressScrollX: false,
+
+        wheelSpeed: 1,
+        wheelPropagation: true,
+        minScrollbarLength: 50,
+      },
     };
   },
   methods: {
+    clickHandle(evt) {
+      if(evt.type == "file"){
+        alert("open tab");
+      }
+       if(evt.type == "folder"){
+        alert("open folder");
+      }
+
+      console.log(  evt);
+       
+    },
     style: function (item) {
       let minWidth = 200;
       let minHeight = item.height / 2 + 50;
@@ -153,8 +194,17 @@ export default {
     },
     build: function () {
       this.list = [];
+      this.treeData.children[1].children = [];
+      this.treeData.children[0].children = [];
       const t = this;
       const data = JSON.parse(this.$refs.manifest.value);
+
+      this.treeData.children[0].children.push({
+        name: "manifest.json",
+        icon: "/img/ui-icons/json.svg",
+        type: "file"
+      });
+
       if (data.icons !== undefined) {
         data.icons.forEach((icon) => {
           if (
@@ -162,6 +212,7 @@ export default {
             icon.type !== undefined &&
             icon.src !== undefined
           ) {
+            //this.treeData[0][1].children = [];
             const wh = icon.sizes.split("x");
             var imgData = {
               size: { width: wh[0], height: wh[1] },
@@ -170,8 +221,14 @@ export default {
               src: null,
             };
             this.list.push(imgData);
+            this.treeData.children[1].children.push({
+              name: imgData.name,
+              icon: "/img/ui-icons/image.svg",
+              type: "file"
+            });
           }
         });
+
         this.list.forEach((icon) => {
           t.context.clearRect(0, 0, t.canvas.width, t.canvas.height);
           t.canvas.width = icon.size.width;
@@ -183,7 +240,6 @@ export default {
           icon.height = icon.size.height;
         });
         this.processing = false;
-        // console.log(this.list)
       }
     },
   },
@@ -197,10 +253,17 @@ export default {
 </script>
 
 <style>
+.scroll-area {
+  /* position: relative;
+  margin: auto; */
+}
 .app {
   display: flex;
 }
-
+.tree-bg {
+  background-color: #1f2428;
+  color: #ffffff;
+}
 .manifest {
   min-width: 300px;
 }
@@ -208,8 +271,11 @@ export default {
   background-position: center;
   background-repeat: no-repeat;
 }
-
- 
-
- 
+.prettier {
+  background-image: url("../public/img/ui-icons/prettier.svg");
+  background-repeat: no-repeat;
+  background-size: 20px 20px;
+  background-position: 5px center;
+  padding-left: 30px !important;
+}
 </style>
